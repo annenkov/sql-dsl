@@ -1,4 +1,7 @@
 #lang racket
+(require (prefix-in bag:
+          (planet "bag.ss" ("soegaard" "galore.plt" 4 2))))  ; utils to work with multisets
+(require rackunit)
 ;;;;;; Problem 2.1 ;;;;;;
 ; not complete - only even item count allowed
 (define (min-and-max xs)
@@ -73,7 +76,23 @@
     (distance x point)))
 
 ;;;;; Problem 4.2 ;;;;;
-; is all elements of xs is in ys
-(define (contains-list-elements? xs ys)
-  (for/and ([x xs])
-    (member x ys)))
+(define (partial-digest lengths-bag)
+  (let ([max-length (apply max (bag:elements lengths-bag))])
+    (place (bag:remove max-length lengths-bag)
+           (list 0 max-length) max-length)))
+
+(define (place lengths-bag res width)
+  (if (bag:empty? lengths-bag)
+        (sort res <)
+        (letrec ([bag-as-list (bag:elements lengths-bag)]
+           [max-length (apply max (bag:elements lengths-bag))]
+           [y-distances (distances res max-length)]
+           [width-y-distances (distances res (- width max-length))])
+          (cond [(bag:subbag? (bag:list->eq y-distances) lengths-bag) 
+                  (with-handlers ([symbol? (lambda (x) (place (apply bag:remove* lengths-bag width-y-distances) (append res (list (- width max-length))) width))])
+                    (place (apply bag:remove* lengths-bag y-distances) (append res (list max-length)) width))]
+                 [(bag:subbag? (bag:list->eq width-y-distances) lengths-bag)
+                  (place (apply bag:remove* lengths-bag width-y-distances) (append res (list (- width max-length))) width)]
+                 [else (raise 'failed)]))))
+
+;(check-equal? (partial-digest (bag:list->eq '(1 3 2))) '(1 2 4))
