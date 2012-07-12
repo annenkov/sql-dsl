@@ -14,9 +14,9 @@
   user_table (id name))
 
 (define-test-suite where-clause-tests
-  (check-equal? (eval-syntax (expand-where #'(where (= id 1)) #'user))
+  (check-equal? (eval-syntax (expand-where #'user #'(where (= id 1))))
                 "(id = '1')")
-  (check-equal? (eval-syntax (expand-where #'(where (and (> id 1) (< id 3))) #'user))
+  (check-equal? (eval-syntax (expand-where #'user #'(where (and (> id 1) (< id 3)))))
                 "((id > '1') and (id < '3'))")
   
   ; не может раскрыться, т.к. id  не является выражением (должно быть (op field value), где 

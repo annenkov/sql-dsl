@@ -16,10 +16,10 @@
 (define (compose-where expr)
   (format "where ~a" expr))
 
-(define (compose-select fields table (where #f))
+(define (compose-select fields table . rest)
   (let ([base-form (list "SELECT" fields "FROM" table)])
-    (string-join (if where 
-                     (append base-form (list "WHERE"  where))
+    (string-join (if (not (null? rest) )
+                     (append base-form (list "WHERE"  rest))
                      base-form) " ")))
 
 (provide (all-defined-out))

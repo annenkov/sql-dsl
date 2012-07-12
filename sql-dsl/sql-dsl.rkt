@@ -11,21 +11,17 @@
 ; которая возвращает SQL запрос в виде строки
 (define-syntax (select-str stx)
   (syntax-case stx ()
-    [(_ from where) (with-syntax ([table (symbol->string (hash-ref (eval-syntax #'from) 'table))]
+    [(_ from rest ...) (with-syntax ([table (symbol->string (hash-ref (eval-syntax #'from) 'table))]
                                   [fields (string-join (map symbol->string (hash-ref (eval-syntax #'from) 'fields)) ",")])
-                      #`(compose-select fields table #,(expand-where #'where #'from)))]
-    [(_ from) (with-syntax ([table (symbol->string (hash-ref (eval-syntax #'from) 'table))]
-                            [fields (string-join (map symbol->string (hash-ref (eval-syntax #'from) 'fields)) ",")])
-                      #`(compose-select fields table))]))
+                      #`(compose-select fields table #,@(map (curry expand-where #'from) (syntax->list #'(rest ...)))))]))
 ; Главный макрос. Формирует запрос и выполняет его используя текущее соединение с БД current-conn
 (define-syntax (select stx)
   (syntax-case stx ()
-    [(_ from where) (with-syntax ([table (symbol->string (hash-ref (eval-syntax #'from) 'table))]
+    [(_ from rest ...) (with-syntax ([table (symbol->string (hash-ref (eval-syntax #'from) 'table))]
                                   [fields (string-join (map symbol->string (hash-ref (eval-syntax #'from) 'fields)) ",")])
-                      #`(query-rows #,(datum->syntax stx 'current-conn) (compose-select fields table #,(expand-where #'where #'from))))]
-    [(_ from) (with-syntax ([table (symbol->string (hash-ref (eval-syntax #'from) 'table))]
-                            [fields (string-join (map symbol->string (hash-ref (eval-syntax #'from) 'fields)) ",")])
-                      #`(query-rows #,(datum->syntax stx 'current-conn) (compose-select fields table )))]))
+                      #`(query-rows #,(datum->syntax stx 'current-conn) (compose-select fields table #,@(map (curry expand-where #'from) (syntax->list #'(rest ...))))))]))
+
+
 
 (define-syntax (define-entity stx)
   (syntax-case stx ()
