@@ -14,12 +14,17 @@
                                   (hash-ref (eval-syntax entity) 'table)))))
 
 (define (compose-where expr)
-  (format "where ~a" expr))
+  (format "WHERE ~a" expr))
+
+(define (to-sql-str tagged-clause)
+  (if (eq? (car tagged-clause) 'where)
+      (compose-where (cdr tagged-clause))
+      ""))
 
 (define (compose-select fields table . rest)
   (let ([base-form (list "SELECT" fields "FROM" table)])
-    (string-join (if (not (null? rest) )
-                     (append base-form (list "WHERE"  rest))
+    (string-join (if (not (null? rest))
+                     (append base-form (map to-sql-str rest))
                      base-form) " ")))
 
 (provide (all-defined-out))

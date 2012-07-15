@@ -13,13 +13,13 @@
   (syntax-case stx ()
     [(_ from rest ...) (with-syntax ([table (symbol->string (hash-ref (eval-syntax #'from) 'table))]
                                   [fields (string-join (map symbol->string (hash-ref (eval-syntax #'from) 'fields)) ",")])
-                      #`(compose-select fields table #,@(map (curry expand-where #'from) (syntax->list #'(rest ...)))))]))
+                      #`(compose-select fields table #,@(map (curry expand-clauses #'from) (syntax->list #'(rest ...)))))]))
 ; Главный макрос. Формирует запрос и выполняет его используя текущее соединение с БД current-conn
 (define-syntax (select stx)
   (syntax-case stx ()
     [(_ from rest ...) (with-syntax ([table (symbol->string (hash-ref (eval-syntax #'from) 'table))]
                                   [fields (string-join (map symbol->string (hash-ref (eval-syntax #'from) 'fields)) ",")])
-                      #`(query-rows #,(datum->syntax stx 'current-conn) (compose-select fields table #,@(map (curry expand-where #'from) (syntax->list #'(rest ...))))))]))
+                      #`(query-rows #,(datum->syntax stx 'current-conn) (compose-select fields table #,@(map (curry expand-clauses #'from) (syntax->list #'(rest ...))))))]))
 
 
 

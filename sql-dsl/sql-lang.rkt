@@ -14,8 +14,8 @@
     [(< k v) #`(make-infix '< '#,(is-field? #'k entity) (escape-value v))]
     [(= k v) #`(make-infix '= '#,(is-field? #'k entity) (escape-value v))]))
 
-(define (expand-where entity stx)
+(define (expand-clauses entity stx)
   (syntax-case* stx (where) symbolic-identifier=?
-    [(where expr) (expand-where-clause #'expr entity)]))
+    [(where expr) #`(cons 'where #,(expand-where-clause #'expr entity))]))
 
 (provide (all-defined-out))
