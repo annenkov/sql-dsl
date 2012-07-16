@@ -28,10 +28,6 @@
   (syntax-case stx ()
     [(_ entity table* fields*) #'(define-for-syntax entity (hash 'table 'table*
                                                                  'fields 'fields*))]))
-(define-syntax (define-entity-for-test stx)
-  (syntax-case stx ()
-    [(_ entity table* fields*) #'(define entity (hash 'table 'table*
-                                                      'fields 'fields*))]))
 
 (define-syntax (define-current-connection stx)
   (syntax-parse stx
