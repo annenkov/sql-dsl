@@ -7,21 +7,22 @@
 (require (for-syntax "sql-lang.rkt"))
 (require "sql-utils.rkt")
 
-; Вспомогательный макрос для отладки запросов. Разводачивается в функцию, compose-select
-; которая возвращает SQL запрос в виде строки
-(define-syntax (select-str stx)
+; Формирует SQL-команду в виде строки
+(define-for-syntax (select-str stx)
   (syntax-case stx ()
-    [(_ from rest ...) (with-syntax ([table (symbol->string (hash-ref (eval-syntax #'from) 'table))]
+    [(from rest ...) (with-syntax ([table (symbol->string (hash-ref (eval-syntax #'from) 'table))]
                                   [fields (string-join (map symbol->string (hash-ref (eval-syntax #'from) 'fields)) ",")])
                       #`(compose-select fields table #,@(map (curry expand-clauses #'from) (syntax->list #'(rest ...)))))]))
-; Главный макрос. Формирует запрос и выполняет его используя текущее соединение с БД current-conn
-(define-syntax (select stx)
+
+; Выполняет запрос, используя текущее соединение с БД current-conn
+(define-syntax (select* stx)
   (syntax-case stx ()
-    [(_ from rest ...) (with-syntax ([table (symbol->string (hash-ref (eval-syntax #'from) 'table))]
-                                  [fields (string-join (map symbol->string (hash-ref (eval-syntax #'from) 'fields)) ",")])
-                      #`(query-rows #,(datum->syntax stx 'current-conn) (compose-select fields table #,@(map (curry expand-clauses #'from) (syntax->list #'(rest ...))))))]))
+    [(_ from rest ...) #`(query-rows #,(datum->syntax stx 'current-conn) #,(select-str #'(from rest ...)))]))
 
-
+; строковое представление SQL для тестирования
+(define-syntax (test-select stx)
+  (syntax-case stx ()
+    [(_ from rest ...) (select-str #'(from rest ...))]))
 
 (define-syntax (define-entity stx)
   (syntax-case stx ()
