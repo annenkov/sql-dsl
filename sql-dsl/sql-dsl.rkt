@@ -15,7 +15,7 @@
                       #`(compose-select fields table #,@(map (curry expand-clauses #'from) (syntax->list #'(rest ...)))))]))
 
 ; Выполняет запрос, используя текущее соединение с БД current-conn
-(define-syntax (select* stx)
+(define-syntax (select stx)
   (syntax-case stx ()
     [(_ from rest ...) #`(query-rows #,(datum->syntax stx 'current-conn) #,(select-str #'(from rest ...)))]))
 

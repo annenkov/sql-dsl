@@ -9,8 +9,8 @@
   user_table (id name))
 
 (define (all-users)
-  (select* user)) ; SELECT id,name FROM user_table
+  (select user)) ; SELECT id,name FROM user_table
 
 (define (get-user-by-id user-id)
-  (select* user (where (= id user-id)))) ; SELECT id,name FROM user_table WHERE (id = <user-id>)
+  (select user (where (= id user-id)))) ; SELECT id,name FROM user_table WHERE (id = <user-id>)
 

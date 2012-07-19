@@ -17,6 +17,17 @@
                 "SELECT id,name FROM user_table WHERE (id = '1')")
   (check-equal? (test-select user [where (and (> id 1) (< id 3))])
                 "SELECT id,name FROM user_table WHERE ((id > '1') and (id < '3'))")
+  (check-equal? (test-select user [order-by name])
+                "SELECT id,name FROM user_table ORDER BY name")
+  (check-equal? (test-select user [order-by name asc])
+                "SELECT id,name FROM user_table ORDER BY name ASC")
+  (check-equal? (test-select user [order-by name desc])
+                "SELECT id,name FROM user_table ORDER BY name DESC")
+  (check-equal? (test-select user [where (= id 1)] [order-by name])
+                "SELECT id,name FROM user_table WHERE (id = '1') ORDER BY name")
+  ; меняем местами where и order-by, результат не должен измениться
+  (check-equal? (test-select user [order-by name] [where (= id 1)])
+                "SELECT id,name FROM user_table WHERE (id = '1') ORDER BY name")
   
   ; не может раскрыться, т.к. id  не является выражением (должно быть (op field value), где 
   ; op - операция сравнения, field поле сущности, value значение поля)

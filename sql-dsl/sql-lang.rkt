@@ -10,12 +10,14 @@
     [(and a b) #`(make-infix 'and #,(expand-where-clause #'a entity) #,(expand-where-clause #'b entity))]
     [(or a b) #`(make-infix 'or #,(expand-where-clause #'a entity) #,(expand-where-clause #'b entity))]
     [(like k v) #`(make-infix 'and 'k (format "~s" v))]
-    [(> k v) #`(make-infix '> '#,(is-field? #'k entity) (escape-value v))]
-    [(< k v) #`(make-infix '< '#,(is-field? #'k entity) (escape-value v))]
-    [(= k v) #`(make-infix '= '#,(is-field? #'k entity) (escape-value v))]))
+    [(> k v) #`(make-infix '> '#,(is-field? #'k entity 'WHERE) (escape-value v))]
+    [(< k v) #`(make-infix '< '#,(is-field? #'k entity 'WHERE) (escape-value v))]
+    [(= k v) #`(make-infix '= '#,(is-field? #'k entity 'WHERE) (escape-value v))]))
 
 (define (expand-clauses entity stx)
-  (syntax-case* stx (where) symbolic-identifier=?
-    [(where expr) #`(cons 'where #,(expand-where-clause #'expr entity))]))
+  (syntax-case* stx (where order-by) symbolic-identifier=?
+    [(where expr) #`(cons 'where #,(expand-where-clause #'expr entity))]
+    [(order-by field) #`(cons 'order-by '#,(is-field? #'field entity 'ORDER-BY))]
+    [(order-by field order) #`(cons 'order-by (make-order-by '#,(is-field? #'field entity 'ORDER-BY) 'order))]))
 
 (provide (all-defined-out))
