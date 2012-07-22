@@ -31,11 +31,13 @@
   
   ; не может раскрыться, т.к. id  не является выражением (должно быть (op field value), где 
   ; op - операция сравнения, field поле сущности, value значение поля)
-  (check-exn exn:fail? 
-             (lambda () (expand '(test-select user [where (and id 1)]))))
+  (check-exn exn:fail?
+             (lambda () (expand #'(test-select user [where (and id 1)]))))
   
   ; id123 не является полем сущности user
   (check-exn exn:fail? 
-             (lambda () (expand '(test-select user [where (= id123 1)])))))
+             (lambda () (expand #'(test-select user [where (= id123 1)]))))
+  (check-exn exn:fail? 
+             (lambda () (expand #'(test-select user [order-by id123])))))
 
 (run-tests sql-select-tests)
