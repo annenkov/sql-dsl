@@ -5,7 +5,6 @@
 (require rackunit)
 (require rackunit/text-ui)
 
-; Для тестов SELECT
 (define-entity user 
   user_table (id name))
 
@@ -40,4 +39,13 @@
   (check-exn exn:fail? 
              (lambda () (expand #'(test-select user [order-by id123])))))
 
-(run-tests sql-select-tests)
+(define user-john
+  (user 1 "John"))
+
+(define-test-suite sql-insert-tests
+  (check-equal? (test-insert user user-john)
+                "INSERT INTO user_table (id, name) VALUES ('1', 'John')"))
+
+(define (run-all)
+  (begin (run-tests sql-select-tests)
+         (run-tests sql-insert-tests)))

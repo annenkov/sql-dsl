@@ -9,7 +9,7 @@
 (define (escape-value v)
   (format "'~a'" (regexp-replace* "(')" (format "~a" v) "\\\\&")))
 
-(define (is-field? field entity field-in)
+(define (field? field entity field-in)
   (if (member (syntax->datum field) (hash-ref (eval-syntax entity) 'fields))
       (syntax->datum field)
       (raise-syntax-error field-in
@@ -45,5 +45,11 @@
                      (append base-form
                              (map to-sql-str (order-clauses rest)))
                      base-form) " ")))
+
+(define (compose-insert table fields values)
+  (format "INSERT INTO ~a (~a) VALUES (~a)"
+          table
+          (string-join fields ", ")
+          (string-join (map (lambda (x)(format "'~a'" x)) values) ", ")))
 
 (provide (all-defined-out))
