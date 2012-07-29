@@ -16,7 +16,7 @@
     (printf "Id: ~a, name: ~a\n" (user-id user) (user-name user)))) 
 
 (define (get-user-by-id user-id)
-  (select user (where (= id user-id)))) ; SELECT id,name FROM user_table WHERE (id = <user-id>)
+  (select user [where (= id user-id)])) ; SELECT id,name FROM user_table WHERE (id = <user-id>)
 
 (define (add-user id name)
   (insert user (user id name)))

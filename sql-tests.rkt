@@ -8,6 +8,14 @@
 (define-entity user 
   user_table (id name))
 
+(define-syntax (test-insert stx)
+  (syntax-case stx ()
+    [(_ entity) (insert-command #'entity)]))
+
+(define-syntax (test-values-for-insert stx)
+  (syntax-case stx ()
+    [(_ entity entity-obj) (expand-values-for-insert #'entity #'entity-obj)]))
+
 
 (define-test-suite sql-select-tests
   (check-equal? (test-select user)
@@ -43,8 +51,10 @@
   (user 1 "John"))
 
 (define-test-suite sql-insert-tests
-  (check-equal? (test-insert user user-john)
-                "INSERT INTO user_table (id, name) VALUES ('1', 'John')"))
+  (check-equal? (test-values-for-insert user user-john)
+                '(1 "John"))
+  (check-equal? (test-insert user)
+                "INSERT INTO user_table (id, name) VALUES ($1, $2)"))
 
 (define (run-all)
   (begin (run-tests sql-select-tests)

@@ -46,10 +46,10 @@
                              (map to-sql-str (order-clauses rest)))
                      base-form) " ")))
 
-(define (compose-insert table fields values)
+(define (compose-insert table fields)
   (format "INSERT INTO ~a (~a) VALUES (~a)"
           table
           (string-join fields ", ")
-          (string-join (map (lambda (x)(format "'~a'" x)) values) ", ")))
+          (string-join (map (lambda (x)(format "$~a" (add1 x))) (build-list (length fields) values)) ", ")))
 
 (provide (all-defined-out))

@@ -44,26 +44,23 @@
 
 (define-for-syntax (expand-values-for-insert entity-stx entity-obj)
   (with-syntax ([selectors (map (lambda (x) (build-selector entity-stx x)) (hash-ref (eval-syntax entity-stx) 'fields))])
-    #`(map (lambda (x) (format "~a" ((eval x) #,entity-obj))) 'selectors)))
+    #`(map (lambda (x) ((eval x) #,entity-obj)) 'selectors)))
 
 
-(define-for-syntax (insert-command entity entity-obj)
+(define-for-syntax (insert-command entity)
   (syntax-case entity ()
     [entity (with-syntax ([fields (hash-ref (eval-syntax #'entity) 'fields)]
                                          [table (hash-ref (eval-syntax #'entity) 'table)])
                              #`(compose-insert 'table 
-                                               (map symbol->string 'fields) 
-                                               #,(expand-values-for-insert #'entity entity-obj)))]))
+                                               (map symbol->string 'fields)))]))
 
-(define-syntax (test-insert stx)
-  (syntax-case stx ()
-    [(_ entity entity-obj) (insert-command #'entity #'entity-obj)]))
 
 (define-syntax (insert stx)
   (syntax-case stx ()
-    [(_ entity entity-obj) #`(query-exec 
+    [(_ entity entity-obj) #`(apply query-exec 
                               #,(datum->syntax stx 'current-conn) 
-                              #,(insert-command #'entity #'entity-obj))]))
+                              #,(insert-command #'entity)
+                              #,(expand-values-for-insert #'entity #'entity-obj))]))
 
 (define-syntax (define-current-connection stx)
   (syntax-parse stx
@@ -71,4 +68,6 @@
      #`(define #,(datum->syntax stx 'current-conn) (virtual-connection 
                              (lambda ()(keyword-apply postgresql-connect '(kw ...) '(v ...) '()))))]))
 
-(provide (all-defined-out))
+(provide (all-defined-out)
+         (for-syntax insert-command
+                     expand-values-for-insert))
