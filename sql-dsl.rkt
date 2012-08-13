@@ -22,45 +22,47 @@
                                       #,(select-command #'(from rest ...)))
                           from)]))
 
-; Строковое представление SQL для тестирования
-(define-syntax (test-select stx)
-  (syntax-case stx ()
-    [(_ from rest ...) (select-command #'(from rest ...))]))
-
 (define (rows->entity-list rows entity)
   (for/list ([row rows])
     (apply entity (vector->list row))))
 
 (define-syntax (define-entity stx)
-  (syntax-case stx ()
-    [(_ entity table* fields*) #'(begin 
-                                   (define-for-syntax entity (hash 'table 'table*
-                                                                   'fields 'fields*))
-                                   (struct entity 
-                                     fields*))]))
+  (syntax-parse stx
+    [(_ entity table* fields* (~optional (~seq #:pk pk-field) #:defaults ([pk-field #'(list-ref (syntax->datum #'fields*) 0)])))
+     #'(begin 
+         (define-for-syntax entity 
+           (hash 'table 'table*
+                 'fields 'fields*
+                 'pk 'pk-field))
+         (struct entity 
+           fields*))]))
 
 (define-for-syntax (build-selector entity field-name)
-  (string->symbol (format "~a-~a" (syntax->datum entity) field-name)))
+  (string->symbol (format "~a-~a" entity field-name)))
 
-(define-for-syntax (expand-values-for-insert entity-stx entity-obj)
-  (with-syntax ([selectors (map (lambda (x) (build-selector entity-stx x)) (hash-ref (eval-syntax entity-stx) 'fields))])
-    #`(map (lambda (x) ((eval x) #,entity-obj)) 'selectors)))
+(define-for-syntax (expand-values entity entity-obj #:exclude [exclude 'null])
+  (let ([fields (hash-ref (eval-syntax entity) 'fields)])
+    (with-syntax ([selectors (map (lambda (x) (build-selector (syntax->datum entity) x)) (filter (lambda (x) (not (member x exclude))) fields))])
+      #`(map (lambda (x) ((eval x) #,entity-obj)) 'selectors))))
 
 
 (define-for-syntax (insert-command entity)
-  (syntax-case entity ()
-    [entity (with-syntax ([fields (hash-ref (eval-syntax #'entity) 'fields)]
-                                         [table (hash-ref (eval-syntax #'entity) 'table)])
-                             #`(compose-insert 'table 
-                                               (map symbol->string 'fields)))]))
-
+  (with-syntax ([fields (hash-ref (eval-syntax entity) 'fields)]
+                [table (hash-ref (eval-syntax entity) 'table)])
+    #`(compose-insert 'table (map symbol->string 'fields))))
 
 (define-syntax (insert stx)
   (syntax-case stx ()
     [(_ entity entity-obj) #`(apply query-exec 
-                              #,(datum->syntax stx 'current-conn) 
-                              #,(insert-command #'entity)
-                              #,(expand-values-for-insert #'entity #'entity-obj))]))
+                                    #,(datum->syntax stx 'current-conn) 
+                                    #,(insert-command #'entity)
+                                    #,(expand-values #'entity #'entity-obj))]))
+
+(define-for-syntax (update-command entity)
+  (with-syntax ([fields (hash-ref (eval-syntax entity) 'fields)]
+        [table (hash-ref (eval-syntax entity) 'table)]
+        [pk-field (hash-ref (eval-syntax entity) 'pk)])
+    #'(compose-update 'table (remove 'pk-field 'fields) 'pk-field)))
 
 (define-syntax (define-current-connection stx)
   (syntax-parse stx
@@ -70,4 +72,6 @@
 
 (provide (all-defined-out)
          (for-syntax insert-command
-                     expand-values-for-insert))
+                     expand-values
+                     select-command
+                     update-command))

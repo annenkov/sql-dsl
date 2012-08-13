@@ -4,17 +4,29 @@
 (require "sql-utils.rkt")
 (require rackunit)
 (require rackunit/text-ui)
+(require (for-syntax syntax/parse))
 
 (define-entity user 
-  user_table (id name))
+  user_table (id name)
+  #:pk id)
+
+; Строковое представление SQL для тестирования
+(define-syntax (test-select stx)
+  (syntax-case stx ()
+    [(_ from rest ...) (select-command #'(from rest ...))]))
 
 (define-syntax (test-insert stx)
   (syntax-case stx ()
     [(_ entity) (insert-command #'entity)]))
 
-(define-syntax (test-values-for-insert stx)
+(define-syntax (test-expand-values stx)
+  (syntax-parse stx 
+    [(_ entity entity-obj (~optional (~seq #:exclude exclude-fields) #:defaults ([exclude-fields #'null])))     
+     (expand-values #'entity #'entity-obj #:exclude (eval-syntax #'exclude-fields))]))
+
+(define-syntax (test-update stx)
   (syntax-case stx ()
-    [(_ entity entity-obj) (expand-values-for-insert #'entity #'entity-obj)]))
+    [(_ entity) (update-command #'entity)]))
 
 
 (define-test-suite sql-select-tests
@@ -51,11 +63,18 @@
   (user 1 "John"))
 
 (define-test-suite sql-insert-tests
-  (check-equal? (test-values-for-insert user user-john)
+  (check-equal? (test-expand-values user user-john)
                 '(1 "John"))
   (check-equal? (test-insert user)
                 "INSERT INTO user_table (id, name) VALUES ($1, $2)"))
 
+(define-test-suite sql-update-tests  
+  (check-equal? (test-expand-values user user-john #:exclude '(id))
+                '("John"))
+  (check-equal? (test-update user)
+                "UPDATE user_table SET name=$1 WHERE id=$2"))
+
 (define (run-all)
   (begin (run-tests sql-select-tests)
-         (run-tests sql-insert-tests)))
+         (run-tests sql-insert-tests)
+         (run-tests sql-update-tests)))

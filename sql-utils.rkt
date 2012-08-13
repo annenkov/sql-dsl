@@ -46,10 +46,29 @@
                              (map to-sql-str (order-clauses rest)))
                      base-form) " ")))
 
+(define (placeholder x)
+  (format "$~a" x))
+
+(define (build-placeholders count)
+  (map placeholder
+       (build-list count add1)))
+
 (define (compose-insert table fields)
   (format "INSERT INTO ~a (~a) VALUES (~a)"
           table
           (string-join fields ", ")
-          (string-join (map (lambda (x)(format "$~a" (add1 x))) (build-list (length fields) values)) ", ")))
+          (string-join (map (lambda (x)(format "$~a" x)) (build-list (length fields) add1)) ", ")))
+
+(define (compose-update table fields pk-field)
+  (let ([field-and-values (for/list ([field-name fields]
+                                     [placeholder (build-placeholders (length fields))])
+                            (cons field-name placeholder))])
+    (format "UPDATE ~a SET ~a WHERE ~a" 
+            table 
+            (string-join (map 
+                          (lambda (x) (format "~a=~a" (car x) (cdr x)))
+                          field-and-values)
+                         ", ") 
+            (format "~a=~a" pk-field (placeholder (add1 (length fields)))))))
 
 (provide (all-defined-out))
