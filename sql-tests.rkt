@@ -21,8 +21,8 @@
 
 (define-syntax (test-expand-values stx)
   (syntax-parse stx 
-    [(_ entity entity-obj (~optional (~seq #:exclude exclude-fields) #:defaults ([exclude-fields #'null])))     
-     (expand-values #'entity #'entity-obj #:exclude (eval-syntax #'exclude-fields))]))
+    [(_ entity entity-obj (~optional (~seq #:for-update for-update) #:defaults ([for-update #'#f])))     
+     (expand-values #'entity #'entity-obj #:for-update (eval-syntax #'for-update))]))
 
 (define-syntax (test-update stx)
   (syntax-case stx ()
@@ -69,8 +69,8 @@
                 "INSERT INTO user_table (id, name) VALUES ($1, $2)"))
 
 (define-test-suite sql-update-tests  
-  (check-equal? (test-expand-values user user-john #:exclude '(id))
-                '("John"))
+  (check-equal? (test-expand-values user user-john #:for-update #t)
+                '("John" 1))
   (check-equal? (test-update user)
                 "UPDATE user_table SET name=$1 WHERE id=$2"))
 

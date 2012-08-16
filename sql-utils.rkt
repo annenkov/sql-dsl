@@ -65,10 +65,8 @@
                             (cons field-name placeholder))])
     (format "UPDATE ~a SET ~a WHERE ~a" 
             table 
-            (string-join (map 
-                          (lambda (x) (format "~a=~a" (car x) (cdr x)))
-                          field-and-values)
-                         ", ") 
+            (string-join (map (lambda (x) (format "~a=~a" (car x) (cdr x)))
+                          field-and-values) ", ") 
             (format "~a=~a" pk-field (placeholder (add1 (length fields)))))))
 
 (provide (all-defined-out))

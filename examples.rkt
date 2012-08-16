@@ -16,7 +16,10 @@
     (printf "Id: ~a, name: ~a\n" (user-id user) (user-name user)))) 
 
 (define (get-user-by-id user-id)
-  (select user [where (= id user-id)])) ; SELECT id,name FROM user_table WHERE (id = <user-id>)
+  (let ([user-in-list (select user [where (= id user-id)])])  ; SELECT id,name FROM user_table WHERE (id = <user-id>)
+    (if (not (empty? user-in-list))
+        (first user-in-list)
+        #f)))
 
 (define (add-user id name)
   (insert user (user id name)))

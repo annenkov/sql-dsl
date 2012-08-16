@@ -28,7 +28,7 @@
 
 (define-syntax (define-entity stx)
   (syntax-parse stx
-    [(_ entity table* fields* (~optional (~seq #:pk pk-field) #:defaults ([pk-field #'(list-ref (syntax->datum #'fields*) 0)])))
+    [(_ entity table* fields* (~optional (~seq #:pk pk-field) #:defaults ([pk-field (datum->syntax stx (list-ref (syntax->datum #'fields*) 0))])))
      #'(begin 
          (define-for-syntax entity 
            (hash 'table 'table*
@@ -40,9 +40,14 @@
 (define-for-syntax (build-selector entity field-name)
   (string->symbol (format "~a-~a" entity field-name)))
 
-(define-for-syntax (expand-values entity entity-obj #:exclude [exclude 'null])
-  (let ([fields (hash-ref (eval-syntax entity) 'fields)])
-    (with-syntax ([selectors (map (lambda (x) (build-selector (syntax->datum entity) x)) (filter (lambda (x) (not (member x exclude))) fields))])
+(define-for-syntax (expand-values entity entity-obj #:exclude [exclude null] #:for-update [for-update #f])
+  (letrec ([all-fields (hash-ref (eval-syntax entity) 'fields)]
+           [pk-field (hash-ref (eval-syntax entity) 'pk)]
+           [fields (if for-update
+                       (append (remove pk-field all-fields) (list pk-field))
+                       all-fields)])
+    (with-syntax ([selectors (map (lambda (x) (build-selector (syntax->datum entity) x)) 
+                                  (filter (lambda (x) (not (member x exclude))) fields))])
       #`(map (lambda (x) ((eval x) #,entity-obj)) 'selectors))))
 
 
@@ -63,6 +68,14 @@
         [table (hash-ref (eval-syntax entity) 'table)]
         [pk-field (hash-ref (eval-syntax entity) 'pk)])
     #'(compose-update 'table (remove 'pk-field 'fields) 'pk-field)))
+
+(define-syntax (update stx)
+  (syntax-case stx ()
+    [(_ entity entity-obj) (with-syntax ([pk-field (hash-ref (eval-syntax #'entity) 'pk)])
+                               #`(apply query-exec 
+                                    #,(datum->syntax stx 'current-conn) 
+                                    #,(update-command #'entity)
+                                    #,(expand-values #'entity #'entity-obj #:for-update #t)))]))
 
 (define-syntax (define-current-connection stx)
   (syntax-parse stx
