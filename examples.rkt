@@ -23,3 +23,6 @@
 
 (define (add-user id name)
   (insert user (user id name)))
+
+(define (rename-user target-user new-name)
+  (update user (struct-copy user target-user [name new-name])))
