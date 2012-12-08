@@ -55,6 +55,7 @@ Rename user
 Delete
 ------
 You can delete entity instance after selecting it.
-:: (define (delete-user-by-id id)
+::
+   (define (delete-user-by-id id)
      (let ([selected-user (first (select user [where (= id id)]))])  ; assuming, that user with given id exists
        (delete user selected-user)))
