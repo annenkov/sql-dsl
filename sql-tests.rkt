@@ -28,6 +28,9 @@
   (syntax-case stx ()
     [(_ entity) (update-command #'entity)]))
 
+(define-syntax (test-delete stx)
+  (syntax-case stx ()
+    [(_ entity) (delete-command #'entity)]))
 
 (define-test-suite sql-select-tests
   (check-equal? (test-select user)
@@ -74,7 +77,12 @@
   (check-equal? (test-update user)
                 "UPDATE user_table SET name=$1 WHERE id=$2"))
 
+(define-test-suite sql-delete-tests
+  (check-equal? (test-delete user)
+                "DELETE FROM user_table WHERE id=$1"))
+
 (define (run-all)
   (begin (run-tests sql-select-tests)
          (run-tests sql-insert-tests)
-         (run-tests sql-update-tests)))
+         (run-tests sql-update-tests)
+         (run-tests sql-delete-tests)))

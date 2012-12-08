@@ -1,7 +1,7 @@
 Overview
 ========
 Simple embedded DSL for making SQL-like queries.
-For now supports SELECT, INSERT, UPDATE commands.
+Now supports SELECT, INSERT, UPDATE and DELETE commands.
 
 Working with DSL
 ================
@@ -51,3 +51,9 @@ Rename user
 ::
    (define (rename-user target-user new-name)
      (update user (struct-copy user target-user [name new-name])))
+
+Delete
+------
+(define (delete-user-by-id id)
+  (let ([selected-user (first (select user [where (= id id)]))])  ; assuming, that user with given id exists
+    (delete user selected-user)))

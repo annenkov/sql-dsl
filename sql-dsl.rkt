@@ -50,6 +50,12 @@
                                   (filter (lambda (x) (not (member x exclude))) fields))])
       #`(map (lambda (x) ((eval x) #,entity-obj)) 'selectors))))
 
+(define-for-syntax (get-pk-value entity entity-obj)
+  (let ([pk-field (hash-ref (eval-syntax entity) 'pk)])
+    (with-syntax ([pk-selector (build-selector (syntax->datum entity) pk-field)])
+   #`((eval 'pk-selector) #,entity-obj))))
+
+
 
 (define-for-syntax (insert-command entity)
   (with-syntax ([fields (hash-ref (eval-syntax entity) 'fields)]
@@ -77,6 +83,19 @@
                                     #,(update-command #'entity)
                                     #,(expand-values #'entity #'entity-obj #:for-update #t)))]))
 
+(define-for-syntax (delete-command entity)
+  (with-syntax ([table (hash-ref (eval-syntax entity) 'table)]
+                [pk-field (hash-ref (eval-syntax entity) 'pk)])
+    #'(compose-delete 'table 'pk-field)))
+
+(define-syntax (delete stx)
+  (syntax-case stx ()
+    [(_ entity entity-obj) (with-syntax ([pk-field (hash-ref (eval-syntax #'entity) 'pk)])
+                               #`(apply query-exec 
+                                    #,(datum->syntax stx 'current-conn) 
+                                    #,(delete-command #'entity)
+                                    (list #,(get-pk-value #'entity #'entity-obj))))]))
+
 (define-syntax (define-current-connection stx)
   (syntax-parse stx
     [(_ (~seq kw:keyword v:expr) ...)
@@ -87,4 +106,5 @@
          (for-syntax insert-command
                      expand-values
                      select-command
-                     update-command))
+                     update-command
+                     delete-command))

@@ -26,3 +26,8 @@
 
 (define (rename-user target-user new-name)
   (update user (struct-copy user target-user [name new-name])))
+
+(define (delete-user-by-id id)
+  (let ([selected-user (first (select user [where (= id id)]))])
+    (delete user selected-user)))
+

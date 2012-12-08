@@ -46,6 +46,9 @@
                              (map to-sql-str (order-clauses rest)))
                      base-form) " ")))
 
+(define (compose-delete table pk-field)
+  (format "DELETE FROM ~a WHERE ~a=~a" table pk-field (placeholder 1)))
+
 (define (placeholder x)
   (format "$~a" x))
 
