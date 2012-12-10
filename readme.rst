@@ -31,7 +31,7 @@ Select queries has following format
 
 For example
 ::
-   (select user))  ; SELECT id,name FROM user_table
+   (select user)  ; SELECT id,name FROM user_table
    (select user [where (and (> id 1) (< id 3))])  ; SELECT id,name FROM user_table WHERE ((id > '1') and (id < '3'))
    (select user [order-by name asc])  ; SELECT id,name FROM user_table ORDER BY name ASC
 
